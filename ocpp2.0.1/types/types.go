@@ -76,7 +76,7 @@ type AdditionalInfo struct {
 }
 
 type IdToken struct {
-	IdToken        string           `json:"idToken" validate:"required,max=36"`
+	IdToken        string           `json:"idToken" validate:"omitempty,max=36"`
 	Type           IdTokenType      `json:"type" validate:"required,idTokenType"`
 	AdditionalInfo []AdditionalInfo `json:"additionalInfo,omitempty" validate:"omitempty,dive"`
 }
