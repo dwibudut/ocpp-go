@@ -22,7 +22,7 @@ func (suite *OcppV2TestSuite) TestGet15118EVCertificateRequestValidation() {
 		{iso15118.Get15118EVCertificateRequest{}, false},
 		{iso15118.Get15118EVCertificateRequest{SchemaVersion: ">50................................................", Action: iso15118.CertificateActionInstall, ExiRequest: "deadbeef"}, false},
 		{iso15118.Get15118EVCertificateRequest{SchemaVersion: "1.0", Action: "invalidCertificateAction", ExiRequest: "deadbeef"}, false},
-		{iso15118.Get15118EVCertificateRequest{SchemaVersion: "1.0", Action: iso15118.CertificateActionInstall, ExiRequest: newLongString(5601)}, false},
+		{iso15118.Get15118EVCertificateRequest{SchemaVersion: "1.0", Action: iso15118.CertificateActionInstall, ExiRequest: newLongString(9601)}, false},
 	}
 	ExecuteGenericTestTable(t, requestTable)
 }
@@ -36,7 +36,7 @@ func (suite *OcppV2TestSuite) TestGet15118EVCertificateConfirmationValidation() 
 		{iso15118.Get15118EVCertificateResponse{ExiResponse: "deadbeef"}, false},
 		{iso15118.Get15118EVCertificateResponse{}, false},
 		{iso15118.Get15118EVCertificateResponse{Status: "invalidCertificateStatus", ExiResponse: "deadbeef", StatusInfo: types.NewStatusInfo("200", "ok")}, false},
-		{iso15118.Get15118EVCertificateResponse{Status: types.Certificate15188EVStatusAccepted, ExiResponse: newLongString(5601), StatusInfo: types.NewStatusInfo("200", "ok")}, false},
+		{iso15118.Get15118EVCertificateResponse{Status: types.Certificate15188EVStatusAccepted, ExiResponse: newLongString(9601), StatusInfo: types.NewStatusInfo("200", "ok")}, false},
 		{iso15118.Get15118EVCertificateResponse{Status: types.Certificate15188EVStatusAccepted, ExiResponse: "deadbeef", StatusInfo: types.NewStatusInfo("", "")}, false},
 	}
 	ExecuteGenericTestTable(t, confirmationTable)
