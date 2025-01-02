@@ -1,0 +1,59 @@
+name: Test
+on: [ push, pull_request, workflow_dispatch ]
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    name: Unit tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+      - name: Run tests
+        run: |
+          docker compose -f docker-compose.test.yaml up unit_test --abort-on-container-exit
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit_coverage_${{ github.sha }}
+          path: ./coverage.out
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: unit
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+      - name: Download coverage from unit tests
+        uses: actions/download-artifact@v4
+        with:
+          name: unit_coverage_${{ github.sha }}
+      - name: Run integration tests
+        run: |
+          docker compose -f docker-compose.test.yaml up integration_test --abort-on-container-exit
+      - name: Merge coverage
+        run: |
+          sed '1d;$d' integration_coverage.out >> coverage.out
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage_${{ github.sha }}
+          path: ./coverage.out
+
+  publish_coverage:
+    runs-on: ubuntu-latest
+    # Unit and integration tests must be run before publishing coverage
+    needs: [ unit, integration ]
+    name: Publish coverage
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+      - name: Download coverage from tests
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage_${{ github.sha }}
+      - name: Publish
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
