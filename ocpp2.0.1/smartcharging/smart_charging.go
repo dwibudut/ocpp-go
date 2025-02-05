@@ -17,6 +17,14 @@ type CSMSHandler interface {
 	OnNotifyEVChargingSchedule(chargingStationID string, request *NotifyEVChargingScheduleRequest) (response *NotifyEVChargingScheduleResponse, err error)
 	// OnReportChargingProfiles is called on the CSMS whenever a ReportChargingProfilesRequest is received from a charging station.
 	OnReportChargingProfiles(chargingStationID string, request *ReportChargingProfilesRequest) (reponse *ReportChargingProfilesResponse, err error)
+	// OnPullDynamicScheduleUpdate is called on the CSMS whenever a PullDynamicScheduleUpdateRequest is received from a charging station.
+	OnPullDynamicScheduleUpdate(chargingStationID string, request *PullDynamicScheduleUpdateRequest) (reponse *PullDynamicScheduleUpdateResponse, err error)
+	// OnNotifyDERAlarm is called on the CSMS whenever a NotifyDERAlarmRequest is received from a charging station.
+	OnNotifyDERAlarm(chargingStationID string, request *NotifyDERAlarmRequest) (reponse *NotifyDERAlarmResponse, err error)
+	// OnNotifyDERStartStop is called on the CSMS whenever a NotifyDERStartStopRequest is received from a charging station.
+	OnNotifyDERStartStop(chargingStationID string, request *NotifyDERStartStopRequest) (reponse *NotifyDERStartStopResponse, err error)
+	// OnReportDERControl is called on the CSMS whenever a ReportDERControlRequest is received from a charging station.
+	OnReportDERControl(chargingStationID string, request *ReportDERControlRequest) (reponse *ReportDERControlResponse, err error)
 }
 
 // Needs to be implemented by Charging stations for handling messages part of the OCPP 2.0 Smart charging profile.
@@ -29,6 +37,20 @@ type ChargingStationHandler interface {
 	OnGetCompositeSchedule(request *GetCompositeScheduleRequest) (response *GetCompositeScheduleResponse, err error)
 	// OnSetChargingProfile is called on a charging station whenever a SetChargingProfileRequest is received from the CSMS.
 	OnSetChargingProfile(request *SetChargingProfileRequest) (response *SetChargingProfileResponse, err error)
+	// OnAFRRSignal is called on a charging station whenever a AFRRSignalRequest is received from the CSMS.
+	OnAFRRSignal(request *AFRRSignalRequest) (response *AFRRSignalResponse, err error)
+	// OnClearDERControl is called on a charging station whenever a ClearDERControlRequest is received from the CSMS.
+	OnClearDERControl(request *ClearDERControlRequest) (response *ClearDERControlResponse, err error)
+	// OnNotifyAllowedEnergyTransfer is called on a charging station whenever a NotifyAllowedEnergyTransferRequest is received from the CSMS.
+	OnNotifyAllowedEnergyTransfer(request *NotifyAllowedEnergyTransferRequest) (response *NotifyAllowedEnergyTransferResponse, err error)
+	// OnGetDERControl is called on a charging station whenever a GetDERControlRequest is received from the CSMS.
+	OnGetDERControl(request *GetDERControlRequest) (response *GetDERControlResponse, err error)
+	// OnSetDERControl is called on a charging station whenever a SetDERControlRequest is received from the CSMS.
+	OnSetDERControl(request *SetDERControlRequest) (response *SetDERControlResponse, err error)
+	// OnUpdateDynamicSchedule is called on a charging station whenever a UpdateDynamicScheduleRequest is received from the CSMS.
+	OnUpdateDynamicSchedule(request *UpdateDynamicScheduleRequest) (response *UpdateDynamicScheduleResponse, err error)
+	// OnUsePriorityCharging is called on a charging station whenever a UsePriorityChargingRequest is received from the CSMS.
+	OnUsePriorityCharging(request *UsePriorityChargingRequest) (response *UsePriorityChargingResponse, err error)
 }
 
 const ProfileName = "smartCharging"
@@ -44,4 +66,15 @@ var Profile = ocpp.NewProfile(
 	NotifyEVChargingScheduleFeature{},
 	ReportChargingProfilesFeature{},
 	SetChargingProfileFeature{},
+	AFRRSignalFeature{},
+	ClearDERControlFeature{},
+	NotifyAllowedEnergyTransferFeature{},
+	UpdateDynamicScheduleFeature{},
+	UsePriorityChargingFeature{},
+	PullDynamicScheduleUpdateFeature{},
+	ReportDERControlFeature{},
+	SetDERControlFeature{},
+	GetDERControlFeature{},
+	NotifyDERStartStopFeature{},
+	NotifyDERAlarmFeature{},
 )

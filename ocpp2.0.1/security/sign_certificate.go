@@ -14,6 +14,10 @@ const SignCertificateFeatureName = "SignCertificate"
 type SignCertificateRequest struct {
 	CSR             string                      `json:"csr" validate:"required,max=5500"`                                     // The Charging Station SHALL send the public key in form of a Certificate Signing Request (CSR) as described in RFC 2986 and then PEM encoded.
 	CertificateType types.CertificateSigningUse `json:"certificateType,omitempty" validate:"omitempty,certificateSigningUse"` // Indicates the type of certificate that is to be signed.
+
+	// Optional field for ocpp2.1
+	HashRootCertificate *types.CertificateHashData `json:"hashRootCertificate,omitempty" validate:"omitempty"`
+	RequestId           int                        `json:"requestId,omitempty" validate:"omitempty"`
 }
 
 // This field definition of the SignCertificate response payload, sent by the CSMS to the Charging Station in response to a SignCertificateRequest.

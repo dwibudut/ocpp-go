@@ -113,6 +113,7 @@ func NewClientTimeoutConfig() ClientTimeoutConfig {
 // Channel represents a bi-directional communication channel, which provides at least a unique ID.
 type Channel interface {
 	ID() string
+	OcppVersion() string
 	RemoteAddr() net.Addr
 	TLSConnectionState() *tls.ConnectionState
 }
@@ -129,11 +130,18 @@ type WebSocket struct {
 	forceCloseC        chan error                // used by the readPump to notify a forcefully closed connection to the writePump.
 	pingMessage        chan []byte
 	tlsConnectionState *tls.ConnectionState
+
+	negotiatedSubprotocol string
 }
 
 // Retrieves the unique Identifier of the websocket (typically, the URL suffix).
 func (websocket *WebSocket) ID() string {
 	return websocket.id
+}
+
+// Retrieves the sub protocol of the websocket (ocpp version).
+func (websocket *WebSocket) OcppVersion() string {
+	return websocket.negotiatedSubprotocol
 }
 
 // Returns the address of the remote peer.
@@ -539,6 +547,8 @@ out:
 		forceCloseC:        make(chan error, 1),
 		pingMessage:        make(chan []byte, 1),
 		tlsConnectionState: r.TLS,
+
+		negotiatedSubprotocol: negotiatedSuprotocol,
 	}
 	log.Debugf("upgraded websocket connection for %s from %s", id, conn.RemoteAddr().String())
 	// If unsupported subprotocol, terminate the connection immediately

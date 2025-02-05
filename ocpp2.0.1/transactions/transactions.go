@@ -7,6 +7,8 @@ import "github.com/lorenzodonini/ocpp-go/ocpp"
 type CSMSHandler interface {
 	// OnTransactionEvent is called on the CSMS whenever a TransactionEventRequest is received from a charging station.
 	OnTransactionEvent(chargingStationID string, request *TransactionEventRequest) (response *TransactionEventResponse, err error)
+	// OnBatterySwap is called on the CSMS whenever a BatterySwapRequest is received from a charging station.
+	OnBatterySwap(chargingStationID string, request *BatterySwapRequest) (response *BatterySwapResponse, err error)
 }
 
 // Needs to be implemented by Charging stations for handling messages part of the OCPP 2.0 Transactions profile.
@@ -21,4 +23,5 @@ var Profile = ocpp.NewProfile(
 	ProfileName,
 	GetTransactionStatusFeature{},
 	TransactionEventFeature{},
+	BatterySwapFeature{},
 )

@@ -68,6 +68,9 @@ const (
 	CALL        MessageType = 2
 	CALL_RESULT MessageType = 3
 	CALL_ERROR  MessageType = 4
+
+	CALL_RESULT_ERROR MessageType = 5
+	SEND              MessageType = 6
 )
 
 // An OCPP-J message.
@@ -181,6 +184,64 @@ func (callError *CallError) MarshalJSON() ([]byte, error) {
 		fields[4] = callError.ErrorDetails
 	}
 	return ocppMessageToJson(fields)
+}
+
+// An OCPP-J CallResultError message, containing an OCPP Error.
+type CallResultError struct {
+	Message
+	MessageTypeId    MessageType    `json:"messageTypeId" validate:"required,eq=5"`
+	UniqueId         string         `json:"uniqueId" validate:"required,max=36"`
+	ErrorCode        ocpp.ErrorCode `json:"errorCode" validate:"errorCode"`
+	ErrorDescription string         `json:"errorDescription" validate:"omitempty"`
+	ErrorDetails     interface{}    `json:"errorDetails" validate:"omitempty"`
+}
+
+func (callResultError *CallResultError) GetMessageTypeId() MessageType {
+	return callResultError.MessageTypeId
+}
+
+func (callResultError *CallResultError) GetUniqueId() string {
+	return callResultError.UniqueId
+}
+
+func (callResultError *CallResultError) MarshalJSON() ([]byte, error) {
+	fields := make([]interface{}, 5)
+	fields[0] = int(callResultError.MessageTypeId)
+	fields[1] = callResultError.UniqueId
+	fields[2] = callResultError.ErrorCode
+	fields[3] = callResultError.ErrorDescription
+	if callResultError.ErrorDetails == nil {
+		fields[4] = struct{}{}
+	} else {
+		fields[4] = callResultError.ErrorDetails
+	}
+	return ocppMessageToJson(fields)
+}
+
+// An OCPP-J Send message, containing an OCPP Request.
+type Send struct {
+	Message       `validate:"-"`
+	MessageTypeId MessageType  `json:"messageTypeId" validate:"required,eq=6"`
+	UniqueId      string       `json:"uniqueId" validate:"required,max=36"`
+	Action        string       `json:"action" validate:"required,max=36"`
+	Payload       ocpp.Request `json:"payload" validate:"required"`
+}
+
+func (send *Send) GetMessageTypeId() MessageType {
+	return send.MessageTypeId
+}
+
+func (send *Send) GetUniqueId() string {
+	return send.UniqueId
+}
+
+func (send *Send) MarshalJSON() ([]byte, error) {
+	fields := make([]interface{}, 4)
+	fields[0] = int(send.MessageTypeId)
+	fields[1] = send.UniqueId
+	fields[2] = send.Action
+	fields[3] = send.Payload
+	return jsonMarshal(fields)
 }
 
 const (
@@ -498,6 +559,73 @@ func (endpoint *Endpoint) ParseMessage(arr []interface{}, pendingRequestState Cl
 			return nil, errorFromValidation(err.(validator.ValidationErrors), uniqueId, "")
 		}
 		return &callError, nil
+	} else if typeId == CALL_RESULT_ERROR {
+		_, ok := pendingRequestState.GetPendingRequest(uniqueId)
+		if !ok {
+			log.Infof("No previous request %v sent. Discarding error message", uniqueId)
+			return nil, nil
+		}
+		if len(arr) < 4 {
+			return nil, ocpp.NewError(FormatErrorType(endpoint), "Invalid Call Result Error message. Expected array length >= 4", uniqueId)
+		}
+		var details interface{}
+		if len(arr) > 4 {
+			details = arr[4]
+		}
+		rawErrorCode, ok := arr[2].(string)
+		if !ok {
+			return nil, ocpp.NewError(FormatErrorType(endpoint), fmt.Sprintf("Invalid element %v at 2, expected rawErrorCode (string)", arr[2]), rawErrorCode)
+		}
+		errorCode := ocpp.ErrorCode(rawErrorCode)
+		errorDescription := ""
+		if v, ok := arr[3].(string); ok {
+			errorDescription = v
+		}
+		callResultError := CallResultError{
+			MessageTypeId:    CALL_RESULT_ERROR,
+			UniqueId:         uniqueId,
+			ErrorCode:        errorCode,
+			ErrorDescription: errorDescription,
+			ErrorDetails:     details,
+		}
+		err := Validate.Struct(callResultError)
+		if err != nil {
+			return nil, errorFromValidation(err.(validator.ValidationErrors), uniqueId, "")
+		}
+		return &callResultError, nil
+	} else if typeId == SEND {
+		if len(arr) != 4 {
+			log.Errorf("%v", ocpp.NewError(FormatErrorType(endpoint), "Invalid Send message. Expected array length 4", uniqueId))
+			return nil, nil
+		}
+		action, ok := arr[2].(string)
+		if !ok {
+			log.Errorf("%v", ocpp.NewError(FormatErrorType(endpoint), fmt.Sprintf("Invalid element %v at 2, expected action (string)", arr[2]), uniqueId))
+			return nil, nil
+		}
+
+		profile, ok := endpoint.GetProfileForFeature(action)
+		if !ok {
+			log.Errorf("%v", ocpp.NewError(NotSupported, fmt.Sprintf("Unsupported feature %v", action), uniqueId))
+			return nil, nil
+		}
+		request, err := profile.ParseRequest(action, arr[3], parseRawJsonRequest)
+		if err != nil {
+			log.Errorf("%v", ocpp.NewError(FormatErrorType(endpoint), err.Error(), uniqueId))
+			return nil, nil
+		}
+		send := Send{
+			MessageTypeId: SEND,
+			UniqueId:      uniqueId,
+			Action:        action,
+			Payload:       request,
+		}
+		err = Validate.Struct(send)
+		if err != nil {
+			log.Errorf("%v", errorFromValidation(err.(validator.ValidationErrors), uniqueId, action))
+			return nil, nil
+		}
+		return &send, nil
 	} else {
 		return nil, ocpp.NewError(MessageTypeNotSupported, fmt.Sprintf("Invalid message type ID %v", typeId), uniqueId)
 	}
@@ -569,4 +697,49 @@ func (endpoint *Endpoint) CreateCallError(uniqueId string, code ocpp.ErrorCode, 
 		}
 	}
 	return &callError, nil
+}
+
+// Creates a CallResultError message, given the message's unique ID and the error.
+func (endpoint *Endpoint) CreateCallResultError(uniqueId string, code ocpp.ErrorCode, description string, details interface{}) (*CallError, error) {
+	callError := CallError{
+		MessageTypeId:    CALL_RESULT_ERROR,
+		UniqueId:         uniqueId,
+		ErrorCode:        code,
+		ErrorDescription: description,
+		ErrorDetails:     details,
+	}
+	if validationEnabled {
+		err := Validate.Struct(callError)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &callError, nil
+}
+
+// Creates a Send message, given an OCPP request. A unique ID for the message is automatically generated.
+// Returns an error in case the request's feature is not supported on this endpoint.
+//
+// The created call is not automatically scheduled for transmission and is not added to the list of pending requests.
+func (endpoint *Endpoint) CreateSend(request ocpp.Request) (*Call, error) {
+	action := request.GetFeatureName()
+	profile, _ := endpoint.GetProfileForFeature(action)
+	if profile == nil {
+		return nil, fmt.Errorf("Couldn't create Call for unsupported action %v", action)
+	}
+	// TODO: handle collisions?
+	uniqueId := messageIdGenerator()
+	call := Call{
+		MessageTypeId: SEND,
+		UniqueId:      uniqueId,
+		Action:        action,
+		Payload:       request,
+	}
+	if validationEnabled {
+		err := Validate.Struct(call)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &call, nil
 }

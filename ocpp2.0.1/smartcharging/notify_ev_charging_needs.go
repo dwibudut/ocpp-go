@@ -37,12 +37,17 @@ const (
 	EVChargingNeedsStatusAccepted   EVChargingNeedsStatus = "Accepted"
 	EVChargingNeedsStatusRejected   EVChargingNeedsStatus = "Rejected"
 	EVChargingNeedsStatusProcessing EVChargingNeedsStatus = "Processing"
+
+	// Additional type for ocpp2.1
+	EVChargingNeedsStatusNoChargingProfile EVChargingNeedsStatus = "NoChargingProfile"
 )
 
 func isValidEVChargingNeedsStatus(fl validator.FieldLevel) bool {
 	status := EVChargingNeedsStatus(fl.Field().String())
 	switch status {
 	case EVChargingNeedsStatusAccepted, EVChargingNeedsStatusRejected, EVChargingNeedsStatusProcessing:
+		return true
+	case EVChargingNeedsStatusNoChargingProfile:
 		return true
 	default:
 		return false
@@ -75,6 +80,13 @@ type ChargingNeeds struct {
 	DepartureTime           *types.DateTime       `json:"departureTime,omitempty" validate:"omitempty"`                   // Estimated departure time of the EV.
 	ACChargingParameters    *ACChargingParameters `json:"acChargingParameters,omitempty" validate:"omitempty,dive"`       // AC charging parameters.
 	DCChargingParameters    *DCChargingParameters `json:"dcChargingParameters,omitempty" validate:"omitempty,dive"`       // AC charging parameters.
+
+	// Optional field for ocpp2.1
+	DERChargingParameters   *DERChargingParametersType         `json:"derChargingParameters,omitempty" validate:"omitempty"`
+	EVEnergyOffer           *EVEnergyOfferType                 `json:"evEnergyOffer,omitempty" validate:"omitempty"`
+	V2XChargingParameters   *V2XChargingParametersType         `json:"v2xChargingParameters,omitempty" validate:"omitempty"`
+	AvailableEnergyTransfer []types.EnergyTransferModeEnumType `json:"availableEnergyTransfer,omitempty" validate:"omitempty,min=1,dive,energyTransferModeType"`
+	ControlMode             types.ControlModeEnumType          `json:"controlMode,omitempty" validate:"omitempty,controlModeType"`
 }
 
 // The field definition of the NotifyEVChargingNeeds request payload sent by the Charging Station to the CSMS.
@@ -82,6 +94,9 @@ type NotifyEVChargingNeedsRequest struct {
 	MaxScheduleTuples *int          `json:"maxScheduleTuples,omitempty" validate:"omitempty,gte=0"`
 	EvseID            int           `json:"evseId" validate:"gt=0"`
 	ChargingNeeds     ChargingNeeds `json:"chargingNeeds" validate:"required"`
+
+	// Optional field for ocpp2.1
+	Timestamp *types.DateTime `json:"timestamp,omitempty" validate:"omitempty"`
 }
 
 // This field definition of the NotifyEVChargingNeeds response payload, sent by the CSMS to the Charging Station in response to a NotifyEVChargingNeedsRequest.

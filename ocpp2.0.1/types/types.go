@@ -58,12 +58,19 @@ const (
 	IdTokenTypeLocal           IdTokenType = "Local"
 	IdTokenTypeMacAddress      IdTokenType = "MacAddress"
 	IdTokenTypeNoAuthorization IdTokenType = "NoAuthorization"
+
+	// Additional type for ocpp2.1
+	IdTokenTypeDirectPayment IdTokenType = "DirectPayment"
+	IdTokenTypeEVCCID        IdTokenType = "EVCCID"
+	IdTokenTypeVIN           IdTokenType = "VIN"
 )
 
 func isValidIdTokenType(fl validator.FieldLevel) bool {
 	tokenType := IdTokenType(fl.Field().String())
 	switch tokenType {
 	case IdTokenTypeCentral, IdTokenTypeEMAID, IdTokenTypeISO14443, IdTokenTypeISO15693, IdTokenTypeKeyCode, IdTokenTypeLocal, IdTokenTypeMacAddress, IdTokenTypeNoAuthorization:
+		return true
+	case IdTokenTypeDirectPayment, IdTokenTypeEVCCID, IdTokenTypeVIN:
 		return true
 	default:
 		return false
@@ -82,12 +89,12 @@ func isValidIdToken(sl validator.StructLevel) {
 }
 
 type AdditionalInfo struct {
-	AdditionalIdToken string `json:"additionalIdToken" validate:"required,max=36"`
+	AdditionalIdToken string `json:"additionalIdToken" validate:"required,max=255"`
 	Type              string `json:"type" validate:"required,max=50"`
 }
 
 type IdToken struct {
-	IdToken        string           `json:"idToken" validate:"max=36"`
+	IdToken        string           `json:"idToken" validate:"max=255"`
 	Type           IdTokenType      `json:"type" validate:"required,idTokenType"`
 	AdditionalInfo []AdditionalInfo `json:"additionalInfo,omitempty" validate:"omitempty,dive"`
 }
@@ -258,7 +265,7 @@ func isValidMessageFormatType(fl validator.FieldLevel) bool {
 type MessageContent struct {
 	Format   MessageFormatType `json:"format" validate:"required,messageFormat"`
 	Language string            `json:"language,omitempty" validate:"max=8"`
-	Content  string            `json:"content" validate:"required,max=512"`
+	Content  string            `json:"content" validate:"required,max=1024"`
 }
 
 type GroupIdToken struct {
@@ -294,8 +301,8 @@ func NewIdTokenInfo(status AuthorizationStatus) *IdTokenInfo {
 
 // StatusInfo is an element providing more information about the message status.
 type StatusInfo struct {
-	ReasonCode     string `json:"reasonCode" validate:"required,max=20"`                 // A predefined code for the reason why the status is returned in this response. The string is case- insensitive.
-	AdditionalInfo string `json:"additionalInfo,omitempty" validate:"omitempty,max=512"` // Additional text to provide detailed information.
+	ReasonCode     string `json:"reasonCode" validate:"required,max=20"`                  // A predefined code for the reason why the status is returned in this response. The string is case- insensitive.
+	AdditionalInfo string `json:"additionalInfo,omitempty" validate:"omitempty,max=1024"` // Additional text to provide detailed information.
 }
 
 // NewStatusInfo creates a StatusInfo struct.
@@ -444,12 +451,21 @@ const (
 	ChargingLimitSourceOther                                 ChargingLimitSourceType    = "Other"
 	ChargingLimitSourceSO                                    ChargingLimitSourceType    = "SO"
 	ChargingLimitSourceCSO                                   ChargingLimitSourceType    = "CSO"
+
+	// Additional type for ocpp2.1
+	ChargingProfilePurposePriorityCharging ChargingProfilePurposeType = "PriorityCharging"
+	ChargingProfilePurposeLocalGeneration  ChargingProfilePurposeType = "LocalGeneration"
+
+	// Additional type for ocpp2.1
+	ChargingProfileKindDynamic ChargingProfileKindType = "Dynamic"
 )
 
 func isValidChargingProfilePurpose(fl validator.FieldLevel) bool {
 	purposeType := ChargingProfilePurposeType(fl.Field().String())
 	switch purposeType {
 	case ChargingProfilePurposeChargingStationExternalConstraints, ChargingProfilePurposeChargingStationMaxProfile, ChargingProfilePurposeTxDefaultProfile, ChargingProfilePurposeTxProfile:
+		return true
+	case ChargingProfilePurposePriorityCharging, ChargingProfilePurposeLocalGeneration:
 		return true
 	default:
 		return false
@@ -460,6 +476,8 @@ func isValidChargingProfileKind(fl validator.FieldLevel) bool {
 	purposeType := ChargingProfileKindType(fl.Field().String())
 	switch purposeType {
 	case ChargingProfileKindAbsolute, ChargingProfileKindRecurring, ChargingProfileKindRelative:
+		return true
+	case ChargingProfileKindDynamic:
 		return true
 	default:
 		return false
@@ -500,6 +518,26 @@ type ChargingSchedulePeriod struct {
 	StartPeriod  int     `json:"startPeriod" validate:"gte=0"`
 	Limit        float64 `json:"limit" validate:"gte=0"`
 	NumberPhases *int    `json:"numberPhases,omitempty" validate:"omitempty,gte=0"`
+
+	// Optional field for ocpp2.1
+	LimitL2                *float64                 `json:"limit_L2,omitempty" validate:"omitempty"`
+	LimitL3                *float64                 `json:"limit_L3,omitempty" validate:"omitempty"`
+	PhaseToUse             int                      `json:"phaseToUse,omitempty" validate:"omitempty,gte=0,lte=3"`
+	DischargeLimit         *float64                 `json:"dischargeLimit,omitempty" validate:"omitempty,lte=0"`
+	DischargeLimitL2       *float64                 `json:"dischargeLimit_L2,omitempty" validate:"omitempty,lte=0"`
+	DischargeLimitL3       *float64                 `json:"dischargeLimit_L3,omitempty" validate:"omitempty,lte=0"`
+	Setpoint               *float64                 `json:"setpoint,omitempty" validate:"omitempty"`
+	Setpoint_L2            *float64                 `json:"setpoint_L2,omitempty" validate:"omitempty"`
+	Setpoint_L3            *float64                 `json:"setpoint_L3,omitempty" validate:"omitempty"`
+	SetpointReactive       *float64                 `json:"setpointReactive,omitempty" validate:"omitempty"`
+	SetpointReactiveL2     *float64                 `json:"setpointReactive_L2,omitempty" validate:"omitempty"`
+	SetpointReactiveL3     *float64                 `json:"setpointReactive_L3,omitempty" validate:"omitempty"`
+	PreconditioningRequest bool                     `json:"preconditioningRequest,omitempty" validate:"omitempty"`
+	EvseSleep              bool                     `json:"evseSleep,omitempty" validate:"omitempty"`
+	V2xBaseline            *float64                 `json:"v2xBaseline,omitempty" validate:"omitempty"`
+	OperationMode          OperationModeEnumType    `json:"operationMode,omitempty" validate:"omitempty,operationModeType"`
+	V2xFreqWattCurve       []V2XFreqWattPointType   `json:"v2xFreqWattCurve,omitempty" validate:"omitempty,min=1,max=20,dive"`
+	V2xSignalWattCurve     []V2XSignalWattPointType `json:"v2xSignalWattCurve,omitempty" validate:"omitempty,min=1,max=20,dive"`
 }
 
 func NewChargingSchedulePeriod(startPeriod int, limit float64) ChargingSchedulePeriod {
@@ -514,6 +552,16 @@ type ChargingSchedule struct {
 	MinChargingRate        *float64                 `json:"minChargingRate,omitempty" validate:"omitempty,gte=0"`
 	ChargingSchedulePeriod []ChargingSchedulePeriod `json:"chargingSchedulePeriod" validate:"required,min=1,max=1024"`
 	SalesTariff            *SalesTariff             `json:"salesTariff,omitempty" validate:"omitempty"` // Sales tariff associated with this charging schedule.
+
+	// Optional field for ocpp2.1
+	LimitAtSoC            *LimitAtSoCType            `json:"limitAtSoC,omitempty" validate:"omitempty"`
+	PowerTolerance        *float64                   `json:"powerTolerance,omitempty" validate:"omitempty"`
+	SignatureId           int                        `json:"signatureId,omitempty" validate:"omitempty,gte=0"`
+	DigestValue           string                     `json:"digestValue,omitempty" validate:"omitempty,max=88"`
+	UseLocalTime          bool                       `json:"useLocalTime,omitempty" validate:"omitempty"`
+	RandomizedDelay       int                        `json:"randomizedDelay,omitempty" validate:"omitempty,gte=0"`
+	AbsolutePriceSchedule *AbsolutePriceScheduleType `json:"absolutePriceSchedule,omitempty" validate:"omitempty"`
+	PriceLevelSchedule    *PriceLevelScheduleType    `json:"priceLevelSchedule,omitempty" validate:"omitempty"`
 }
 
 func NewChargingSchedule(id int, chargingRateUnit ChargingRateUnitType, schedulePeriod ...ChargingSchedulePeriod) *ChargingSchedule {
@@ -530,6 +578,13 @@ type ChargingProfile struct {
 	ValidTo                *DateTime                  `json:"validTo,omitempty"`
 	TransactionID          string                     `json:"transactionId,omitempty" validate:"omitempty,max=36"`
 	ChargingSchedule       []ChargingSchedule         `json:"chargingSchedule" validate:"required,min=1,max=3,dive"`
+
+	// Optional field for ocpp2.1
+	MaxOfflineDuration          int       `json:"maxOfflineDuration,omitempty" validate:"omitempty"`
+	InvalidAfterOfflineDuration bool      `json:"invalidAfterOfflineDuration,omitempty" validate:"omitempty"`
+	DynUpdateInterval           int       `json:"dynUpdateInterval,omitempty" validate:"omitempty"`
+	DynUpdateTime               *DateTime `json:"dynUpdateTime,omitempty" validate:"omitempty"`
+	PriceScheduleSignature      string    `json:"priceScheduleSignature,omitempty" validate:"omitempty,max=256"`
 }
 
 func NewChargingProfile(id int, stackLevel int, chargingProfilePurpose ChargingProfilePurposeType, chargingProfileKind ChargingProfileKindType, schedule []ChargingSchedule) *ChargingProfile {
@@ -611,6 +666,42 @@ const (
 	LocationEV                            Location       = "EV"
 	LocationInlet                         Location       = "Inlet"
 	LocationOutlet                        Location       = "Outlet"
+
+	// Additional type for ocpp2.1
+	LocationUpstream Location = "Upstream"
+
+	// Additional type for ocpp2.1
+	MeasurandCurrentExportOffered                      Measurand = "Current.Export.Offered"
+	MeasurandCurrentExportMinimum                      Measurand = "Current.Export.Minimum"
+	MeasurandCurrentImportOffered                      Measurand = "Current.Import.Offered"
+	MeasurandCurrentImportMinimum                      Measurand = "Current.Import.Minimum"
+	MeasurandDisplayPresentSOC                         Measurand = "Display.PresentSOC"
+	MeasurandDisplayMinimumSOC                         Measurand = "Display.MinimumSOC"
+	MeasurandDisplayTargetSOC                          Measurand = "Display.TargetSOC"
+	MeasurandDisplayMaximumSOC                         Measurand = "Display.MaximumSOC"
+	MeasurandDisplayRemainingTimeToMinimumSOC          Measurand = "Display.RemainingTimeToMinimumSOC"
+	MeasurandDisplayRemainingTimeToTargetSOC           Measurand = "Display.RemainingTimeToTargetSOC"
+	MeasurandDisplayRemainingTimeToMaximumSOC          Measurand = "Display.RemainingTimeToMaximumSOC"
+	MeasurandDisplayChargingComplete                   Measurand = "Display.ChargingComplete"
+	MeasurandDisplayBatteryEnergyCapacity              Measurand = "Display.BatteryEnergyCapacity"
+	MeasurandDisplayInletHot                           Measurand = "Display.InletHot"
+	MeasurandEnergyActiveImportCableLoss               Measurand = "Energy.Active.Import.CableLoss"
+	MeasurandEnergyActiveImportLocalGenerationRegister Measurand = "Energy.Active.Import.LocalGeneration.Register"
+	MeasurandEnergyActiveSetpointInterval              Measurand = "Energy.Active.Setpoint.Interval"
+	MeasurandEnergyRequestTarget                       Measurand = "EnergyRequest.Target"
+	MeasurandEnergyRequestMinimum                      Measurand = "EnergyRequest.Minimum"
+	MeasurandEnergyRequestMaximum                      Measurand = "EnergyRequest.Maximum"
+	MeasurandEnergyRequestMinimumV2X                   Measurand = "EnergyRequest.Minimum.V2X"
+	MeasurandEnergyRequestMaximumV2X                   Measurand = "EnergyRequest.Maximum.V2X"
+	MeasurandEnergyRequestBulk                         Measurand = "EnergyRequest.Bulk"
+	MeasurandPowerActiveSetpoint                       Measurand = "Power.Active.Setpoint"
+	MeasurandPowerActiveResidual                       Measurand = "Power.Active.Residual"
+	MeasurandPowerExportMinimum                        Measurand = "Power.Export.Minimum"
+	MeasurandPowerExportOffered                        Measurand = "Power.Export.Offered"
+	MeasurandPowerImportOffered                        Measurand = "Power.Import.Offered"
+	MeasurandPowerImportMinimum                        Measurand = "Power.Import.Minimum"
+	MeasurandVoltageMinimum                            Measurand = "Voltage.Minimum"
+	MeasurandVoltageMaximum                            Measurand = "Voltage.Maximum"
 )
 
 func isValidReadingContext(fl validator.FieldLevel) bool {
@@ -627,6 +718,8 @@ func isValidMeasurand(fl validator.FieldLevel) bool {
 	measurand := Measurand(fl.Field().String())
 	switch measurand {
 	case MeasurandSoC, MeasurandCurrentExport, MeasurandCurrentImport, MeasurandCurrentOffered, MeasurandEnergyActiveExportInterval, MeasurandEnergyActiveExportRegister, MeasurandEnergyReactiveExportInterval, MeasurandEnergyReactiveExportRegister, MeasurandEnergyReactiveImportRegister, MeasurandEnergyReactiveImportInterval, MeasurandEnergyActiveImportInterval, MeasurandEnergyActiveImportRegister, MeasurandFrequency, MeasurandPowerActiveExport, MeasurandPowerActiveImport, MeasurandPowerReactiveImport, MeasurandPowerReactiveExport, MeasurandPowerOffered, MeasurandPowerFactor, MeasurandVoltage, MeasurandTemperature, MeasurandEnergyActiveNet, MeasurandEnergyApparentNet, MeasurandEnergyReactiveNet, MeasurandEnergyApparentImport, MeasurandEnergyApparentExport:
+		return true
+	case MeasurandCurrentExportOffered, MeasurandCurrentExportMinimum, MeasurandCurrentImportOffered, MeasurandCurrentImportMinimum, MeasurandDisplayPresentSOC, MeasurandDisplayMinimumSOC, MeasurandDisplayTargetSOC, MeasurandDisplayMaximumSOC, MeasurandDisplayRemainingTimeToMinimumSOC, MeasurandDisplayRemainingTimeToTargetSOC, MeasurandDisplayRemainingTimeToMaximumSOC, MeasurandDisplayChargingComplete, MeasurandDisplayBatteryEnergyCapacity, MeasurandDisplayInletHot, MeasurandEnergyActiveImportCableLoss, MeasurandEnergyActiveImportLocalGenerationRegister, MeasurandEnergyActiveSetpointInterval, MeasurandEnergyRequestTarget, MeasurandEnergyRequestMinimum, MeasurandEnergyRequestMaximum, MeasurandEnergyRequestMinimumV2X, MeasurandEnergyRequestMaximumV2X, MeasurandEnergyRequestBulk, MeasurandPowerActiveSetpoint, MeasurandPowerActiveResidual, MeasurandPowerExportMinimum, MeasurandPowerExportOffered, MeasurandPowerImportOffered, MeasurandPowerImportMinimum, MeasurandVoltageMinimum, MeasurandVoltageMaximum:
 		return true
 	default:
 		return false
@@ -647,6 +740,8 @@ func isValidLocation(fl validator.FieldLevel) bool {
 	location := Location(fl.Field().String())
 	switch location {
 	case LocationBody, LocationCable, LocationEV, LocationInlet, LocationOutlet:
+		return true
+	case LocationUpstream:
 		return true
 	default:
 		return false

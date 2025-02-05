@@ -41,6 +41,9 @@ type GetMonitoringReportRequest struct {
 // In case the request was invalid, or couldn't be processed, an error will be sent instead.
 type GetMonitoringReportResponse struct {
 	Status types.GenericDeviceModelStatus `json:"status" validate:"required,genericDeviceModelStatus"` // This field indicates whether the Charging Station was able to accept the request.
+
+	// Optional field for ocpp2.1
+	StatusInfo *types.StatusInfo `json:"statusInfo,omitempty" validate:"omitempty"`
 }
 
 // A CSMS can request the Charging Station to send a report about configured monitoring settings per component and variable.

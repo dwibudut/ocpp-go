@@ -34,15 +34,22 @@ func isValidCertificateAction(fl validator.FieldLevel) bool {
 type Get15118EVCertificateRequest struct {
 	SchemaVersion string            `json:"iso15118SchemaVersion" validate:"required,max=50"`
 	Action        CertificateAction `json:"action" validate:"required,certificateAction"`
-	ExiRequest    string            `json:"exiRequest" validate:"required,max=9600"` // Raw CertificateInstallationReq request from EV, Base64 encoded.
+	ExiRequest    string            `json:"exiRequest" validate:"required,max=11000"` // Raw CertificateInstallationReq request from EV, Base64 encoded.
+
+	// Optional field for ocpp2.1
+	MaximumContractCertificateChains int      `json:"maximumContractCertificateChains,omitempty" validate:"omitempty,gte=0"`
+	PrioritizedEMAIDs                []string `json:"prioritizedEMAIDs,omitempty" validate:"omitempty,min=1,max=8,dive,max=255"`
 }
 
 // This field definition of the Get15118EVCertificate response payload, sent by the CSMS to the Charging Station in response to a Get15118EVCertificateRequest.
 // In case the request was invalid, or couldn't be processed, an error will be sent instead.
 type Get15118EVCertificateResponse struct {
 	Status      types.Certificate15118EVStatus `json:"status" validate:"required,15118EVCertificate"`
-	ExiResponse string                         `json:"exiResponse" validate:"required,max=9600"` // Raw CertificateInstallationRes response for the EV, Base64 encoded.
+	ExiResponse string                         `json:"exiResponse" validate:"required,max=17000"` // Raw CertificateInstallationRes response for the EV, Base64 encoded.
 	StatusInfo  *types.StatusInfo              `json:"statusInfo,omitempty" validate:"omitempty"`
+
+	// Optional field for ocpp2.1
+	RemainingContracts int `json:"remainingContracts,omitempty" validate:"omitempty,gte=0"`
 }
 
 // An EV connected to a Charging Station may request a new certificate.

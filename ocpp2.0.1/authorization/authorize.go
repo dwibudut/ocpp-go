@@ -37,7 +37,7 @@ func isValidAuthorizeCertificateStatus(fl validator.FieldLevel) bool {
 
 // The field definition of the Authorize request payload sent by the Charging Station to the CSMS.
 type AuthorizeRequest struct {
-	Certificate         string                      `json:"certificate,omitempty" validate:"max=5500"`
+	Certificate         string                      `json:"certificate,omitempty" validate:"max=10000"`
 	IdToken             types.IdToken               `json:"idToken" validate:"required"`
 	CertificateHashData []types.OCSPRequestDataType `json:"iso15118CertificateHashData,omitempty" validate:"max=4,dive"`
 }
@@ -47,6 +47,10 @@ type AuthorizeRequest struct {
 type AuthorizeResponse struct {
 	CertificateStatus AuthorizeCertificateStatus `json:"certificateStatus,omitempty" validate:"omitempty,authorizeCertificateStatus"`
 	IdTokenInfo       types.IdTokenInfo          `json:"idTokenInfo" validate:"required"`
+
+	// Optional field for ocpp2.1
+	AllowedEnergyTransfer []types.EnergyTransferModeEnumType `json:"allowedEnergyTransfer,omitempty" validate:"omitempty,min=1,dive,energyTransferModeType"`
+	Tariff                *types.TariffType                  `json:"tariff,omitempty" validate:"omitempty"`
 }
 
 // Before the owner of an electric vehicle can start or stop charging, the Charging Station has to authorize the operation.

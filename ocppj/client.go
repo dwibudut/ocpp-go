@@ -192,6 +192,27 @@ func (c *Client) SendRequest(request ocpp.Request) error {
 	return nil
 }
 
+func (c *Client) SendSendRequest(request ocpp.Request) error {
+	if !c.dispatcher.IsRunning() {
+		return fmt.Errorf("ocppj client is not started, couldn't send request")
+	}
+	send, err := c.CreateSend(request)
+	if err != nil {
+		return err
+	}
+	jsonMessage, err := send.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	// Message will be processed by dispatcher. A dedicated mechanism allows to delegate the message queue handling.
+	if err = c.dispatcher.SendRequest(RequestBundle{Call: send, Data: jsonMessage}); err != nil {
+		log.Errorf("error dispatching request [%s, %s]: %v", send.UniqueId, send.Action, err)
+		return err
+	}
+	log.Debugf("enqueued CALL [%s, %s]", send.UniqueId, send.Action)
+	return nil
+}
+
 // Sends an OCPP Response to the server.
 // The requestID parameter is required and identifies the previously received request.
 //
@@ -297,6 +318,17 @@ func (c *Client) ocppMessageHandler(data []byte) error {
 			if c.errorHandler != nil {
 				c.errorHandler(ocpp.NewError(callError.ErrorCode, callError.ErrorDescription, callError.UniqueId), callError.ErrorDetails)
 			}
+		case CALL_RESULT_ERROR:
+			callResultError := message.(*CallResultError)
+			log.Debugf("handling incoming CALL RESULT ERROR [%s]", callResultError.UniqueId)
+			c.dispatcher.CompleteRequest(callResultError.GetUniqueId()) // Remove current request from queue and send next one
+			if c.errorHandler != nil {
+				c.errorHandler(ocpp.NewError(callResultError.ErrorCode, callResultError.ErrorDescription, callResultError.UniqueId), callResultError.ErrorDetails)
+			}
+		case SEND:
+			send := message.(*Send)
+			log.Debugf("handling incoming SEND [%s, %s]", send.UniqueId, send.Action)
+			c.requestHandler(send.Payload, send.UniqueId, send.Action)
 		}
 	}
 	return nil

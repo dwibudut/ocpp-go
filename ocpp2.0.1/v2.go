@@ -32,6 +32,8 @@ type ChargingStationConnection interface {
 	ID() string
 	RemoteAddr() net.Addr
 	TLSConnectionState() *tls.ConnectionState
+
+	OcppVersion() string
 }
 
 type (
@@ -113,6 +115,31 @@ type ChargingStation interface {
 	StatusNotification(timestamp *types.DateTime, status availability.ConnectorStatus, evseID int, connectorID int, props ...func(request *availability.StatusNotificationRequest)) (*availability.StatusNotificationResponse, error)
 	// Sends information to the CSMS about a transaction, used for billing purposes.
 	TransactionEvent(t transactions.TransactionEvent, timestamp *types.DateTime, reason transactions.TriggerReason, seqNo int, info transactions.Transaction, props ...func(request *transactions.TransactionEventRequest)) (*transactions.TransactionEventResponse, error)
+	// Sends Close Periodic Event Stream to the CSMS
+	ClosePeriodicEventStream(id int, props ...func(request *diagnostics.ClosePeriodicEventStreamRequest)) (*diagnostics.ClosePeriodicEventStreamResponse, error)
+	// Sends Notify Periodic Event Stream to the CSMS
+	NotifyPeriodicEventStream(id, pending int, basetime *types.DateTime, data []diagnostics.StreamDataElementType, props ...func(request *diagnostics.NotifyPeriodicEventStreamRequest)) error
+	// Sends Notify Priority Charging to the CSMS
+	NotifyPriorityCharging(transactionId string, activated bool, props ...func(request *diagnostics.NotifyPriorityChargingRequest)) (*diagnostics.NotifyPriorityChargingResponse, error)
+	// Sends Notify Settlement to the CSMS
+	NotifySettlement(pspRef string, status types.PaymentStatusEnumType, settlementAmount float64, settlementTime *types.DateTime, props ...func(request *diagnostics.NotifySettlementRequest)) (*diagnostics.NotifySettlementResponse, error)
+	// Sends Open Periodic Event Stream to the CSMS
+	OpenPeriodicEventStream(constantStreamData diagnostics.ConstantStreamDataType, props ...func(request *diagnostics.OpenPeriodicEventStreamRequest)) (*diagnostics.OpenPeriodicEventStreamResponse, error)
+	// Sends Notify DER Alarm to the CSMS
+	NotifyDERAlarm(controlType types.DERControlEnumType, timestamp *types.DateTime, props ...func(request *smartcharging.NotifyDERAlarmRequest)) (*smartcharging.NotifyDERAlarmResponse, error)
+	// Sends Notify DER Start Stop to the CSMS
+	NotifyDERStartStop(controlId string, started bool, timestamp *types.DateTime, props ...func(request *smartcharging.NotifyDERStartStopRequest)) (*smartcharging.NotifyDERStartStopResponse, error)
+	// Sends Pull Dynamic Schedule Update to the CSMS
+	PullDynamicScheduleUpdate(chargingProfileId int, props ...func(request *smartcharging.PullDynamicScheduleUpdateRequest)) (*smartcharging.PullDynamicScheduleUpdateResponse, error)
+	// Sends Report DER Control to the CSMS
+	ReportDERControl(requestId int, props ...func(request *smartcharging.ReportDERControlRequest)) (*smartcharging.ReportDERControlResponse, error)
+	// Sends Vat Number Validation to the CSMS
+	VatNumberValidation(vatNumber string, props ...func(request *tariffcost.VatNumberValidationRequest)) (*tariffcost.VatNumberValidationResponse, error)
+	// Sends Battery Swap to the CSMS
+	BatterySwap(batteryData []transactions.BatteryDataType, eventType transactions.BatterySwapEventEnumType, idToken *types.IdToken, requestId int, props ...func(request *transactions.BatterySwapRequest)) (*transactions.BatterySwapResponse, error)
+	// Sends Get Certificate Chain Status to the CSMS
+	GetCertificateChainStatus(certificateStatusRequests []iso15118.CertificateStatusRequestInfoType, props ...func(request *iso15118.GetCertificateChainStatusRequest)) (*iso15118.GetCertificateChainStatusResponse, error)
+
 	// Registers a handler for incoming security profile messages
 	SetSecurityHandler(handler security.ChargingStationHandler)
 	// Registers a handler for incoming provisioning profile messages
@@ -348,6 +375,36 @@ type CSMS interface {
 	UnpublishFirmware(clientId string, callback func(*firmware.UnpublishFirmwareResponse, error), checksum string, props ...func(request *firmware.UnpublishFirmwareRequest)) error
 	// Instructs a Charging Station to download and install a firmware update.
 	UpdateFirmware(clientId string, callback func(*firmware.UpdateFirmwareResponse, error), requestID int, firmware firmware.Firmware, props ...func(request *firmware.UpdateFirmwareRequest)) error
+	// Sends a Use Priority Charging to a charging station, to influence the power/current drawn by EVs.
+	UsePriorityCharging(clientId string, callback func(*smartcharging.UsePriorityChargingResponse, error), transactionId string, activate bool, props ...func(request *smartcharging.UsePriorityChargingRequest)) error
+	// Sends a Update Dynamic Schedule to a charging station.
+	UpdateDynamicSchedule(clientId string, callback func(*smartcharging.UpdateDynamicScheduleResponse, error), chargingProfileId int, scheduleUpdate types.ChargingScheduleUpdateType, props ...func(request *smartcharging.UpdateDynamicScheduleRequest)) error
+	// Sends a Adjust Periodic Event Stream to a charging station.
+	AdjustPeriodicEventStream(clientId string, callback func(*diagnostics.AdjustPeriodicEventStreamResponse, error), id int, params diagnostics.PeriodicEventStreamParamsType, props ...func(request *diagnostics.AdjustPeriodicEventStreamRequest)) error
+	// Sends a Get Periodic Event Stream to a charging station.
+	GetPeriodicEventStream(clientId string, callback func(*diagnostics.GetPeriodicEventStreamResponse, error), props ...func(request *diagnostics.GetPeriodicEventStreamRequest)) error
+	// Sends a Notify Web Payment Started to a charging station.
+	NotifyWebPaymentStarted(clientId string, callback func(*diagnostics.NotifyWebPaymentStartedResponse, error), evseId int, timeout int, props ...func(request *diagnostics.NotifyWebPaymentStartedRequest)) error
+	// Sends a Request Battery Swap to a charging station.
+	RequestBatterySwap(clientId string, callback func(*remotecontrol.RequestBatterySwapResponse, error), requestId int, idToken types.IdToken, props ...func(request *remotecontrol.RequestBatterySwapRequest)) error
+	// Sends a AFRR Signal to a charging station.
+	AFRRSignal(clientId string, callback func(*smartcharging.AFRRSignalResponse, error), timestamp *types.DateTime, signal int, props ...func(request *smartcharging.AFRRSignalRequest)) error
+	// Sends a Clear DER Control to a charging station.
+	ClearDERControl(clientId string, callback func(*smartcharging.ClearDERControlResponse, error), isDefault bool, props ...func(request *smartcharging.ClearDERControlRequest)) error
+	// Sends a Notify Allowed Energy Transfer to a charging station.
+	NotifyAllowedEnergyTransfer(clientId string, callback func(*smartcharging.NotifyAllowedEnergyTransferResponse, error), transactionId string, allowedEnergyTransfer []types.EnergyTransferModeEnumType, props ...func(request *smartcharging.NotifyAllowedEnergyTransferRequest)) error
+	// Sends a Get DER Control to a charging station.
+	GetDERControl(clientId string, callback func(*smartcharging.GetDERControlResponse, error), requestId int, props ...func(request *smartcharging.GetDERControlRequest)) error
+	// Sends a Set DER Control to a charging station.
+	SetDERControl(clientId string, callback func(*smartcharging.SetDERControlResponse, error), isDefault bool, controlId string, controlType types.DERControlEnumType, props ...func(request *smartcharging.SetDERControlRequest)) error
+	// Sends a Change Transaction Tariff to a charging station.
+	ChangeTransactionTariff(clientId string, callback func(*tariffcost.ChangeTransactionTariffResponse, error), tariff types.TariffType, transactionID string, props ...func(request *tariffcost.ChangeTransactionTariffRequest)) error
+	// Sends a Clear Tariffs to a charging station.
+	ClearTariffs(clientId string, callback func(*tariffcost.ClearTariffsResponse, error), props ...func(request *tariffcost.ClearTariffsRequest)) error
+	// Sends a Get Tariffs to a charging station.
+	GetTariffs(clientId string, callback func(*tariffcost.GetTariffsResponse, error), evseId int, props ...func(request *tariffcost.GetTariffsRequest)) error
+	// Sends a Set Default Tariff to a charging station.
+	SetDefaultTariff(clientId string, callback func(*tariffcost.SetDefaultTariffResponse, error), evseId int, tariff types.TariffType, props ...func(request *tariffcost.SetDefaultTariffRequest)) error
 
 	// Registers a handler for incoming security profile messages.
 	SetSecurityHandler(handler security.CSMSHandler)

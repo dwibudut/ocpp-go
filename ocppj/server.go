@@ -230,6 +230,45 @@ func (s *Server) SendError(clientID string, requestId string, errorCode ocpp.Err
 	return nil
 }
 
+func (s *Server) SendResultError(clientID string, requestId string, errorCode ocpp.ErrorCode, description string, details interface{}) error {
+	callError, err := s.CreateCallResultError(requestId, errorCode, description, details)
+	if err != nil {
+		return err
+	}
+	jsonMessage, err := callError.MarshalJSON()
+	if err != nil {
+		return ocpp.NewError(GenericError, err.Error(), requestId)
+	}
+	if err = s.server.Write(clientID, jsonMessage); err != nil {
+		log.Errorf("error sending response error [%s] to %s: %v", callError.UniqueId, clientID, err)
+		return ocpp.NewError(GenericError, err.Error(), requestId)
+	}
+	log.Debugf("sent CALL RESULT ERROR [%s] for %s", callError.UniqueId, clientID)
+	log.Debugf("sent JSON message to %s: %s", clientID, string(jsonMessage))
+	return nil
+}
+
+func (s *Server) SendSendRequest(clientID string, request ocpp.Request) error {
+	if !s.dispatcher.IsRunning() {
+		return fmt.Errorf("ocppj server is not started, couldn't send request")
+	}
+	call, err := s.CreateSend(request)
+	if err != nil {
+		return err
+	}
+	jsonMessage, err := call.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	// Will not send right away. Queuing message and let it be processed by dedicated requestPump routine
+	if err = s.dispatcher.SendRequest(clientID, RequestBundle{call, jsonMessage}); err != nil {
+		log.Errorf("error dispatching request [%s, %s] to %s: %v", call.UniqueId, call.Action, clientID, err)
+		return err
+	}
+	log.Debugf("enqueued CALL [%s, %s] for %s", call.UniqueId, call.Action, clientID)
+	return nil
+}
+
 func (s *Server) ocppMessageHandler(wsChannel ws.Channel, data []byte) error {
 	parsedJson, err := ParseRawJsonMessage(data)
 	if err != nil {
@@ -280,10 +319,23 @@ func (s *Server) ocppMessageHandler(wsChannel ws.Channel, data []byte) error {
 			}
 		case CALL_ERROR:
 			callError := message.(*CallError)
-			log.Debugf("handling incoming CALL RESULT [%s] from %s", callError.UniqueId, wsChannel.ID())
+			log.Debugf("handling incoming CALL ERROR [%s] from %s", callError.UniqueId, wsChannel.ID())
 			s.dispatcher.CompleteRequest(wsChannel.ID(), callError.GetUniqueId())
 			if s.errorHandler != nil {
 				s.errorHandler(wsChannel, ocpp.NewError(callError.ErrorCode, callError.ErrorDescription, callError.UniqueId), callError.ErrorDetails)
+			}
+		case CALL_RESULT_ERROR:
+			callResultError := message.(*CallResultError)
+			log.Debugf("handling incoming CALL RESULT ERROR [%s] from %s", callResultError.UniqueId, wsChannel.ID())
+			s.dispatcher.CompleteRequest(wsChannel.ID(), callResultError.GetUniqueId())
+			if s.errorHandler != nil {
+				s.errorHandler(wsChannel, ocpp.NewError(callResultError.ErrorCode, callResultError.ErrorDescription, callResultError.UniqueId), callResultError.ErrorDetails)
+			}
+		case SEND:
+			send := message.(*Send)
+			log.Debugf("handling incoming SEND [%s, %s] from %s", send.UniqueId, send.Action, wsChannel.ID())
+			if s.requestHandler != nil {
+				s.requestHandler(wsChannel, send.Payload, send.UniqueId, send.Action)
 			}
 		}
 	}

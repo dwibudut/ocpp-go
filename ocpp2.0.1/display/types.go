@@ -68,6 +68,9 @@ type MessageInfo struct {
 	TransactionID string               `json:"transactionId,omitempty" validate:"omitempty,max=36"` // During which transaction shall this message be shown. Message SHALL be removed by the Charging Station after transaction has ended.
 	Message       types.MessageContent `json:"message" validate:"required"`                         // Contains message details for the message to be displayed on a Charging Station.
 	Display       *types.Component     `json:"display,omitempty" validate:"omitempty"`              // When a Charging Station has multiple Displays, this field can be used to define to which Display this message belongs.
+
+	// Optional field for ocpp2.1
+	MessageExtra []types.MessageContent `json:"messageExtra,omitempty" validate:"omitempty,min=1,max=4,dive"`
 }
 
 func init() {

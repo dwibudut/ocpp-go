@@ -804,6 +804,22 @@ func (cs *csms) SendRequestAsync(clientId string, request ocpp.Request, callback
 		firmware.UnpublishFirmwareFeatureName,
 		firmware.UpdateFirmwareFeatureName:
 		break
+	case diagnostics.AdjustPeriodicEventStreamFeatureName,
+		diagnostics.GetPeriodicEventStreamFeatureName,
+		diagnostics.NotifyWebPaymentStartedFeatureName,
+		remotecontrol.RequestBatterySwapFeatureName,
+		smartcharging.AFRRSignalFeatureName,
+		smartcharging.ClearDERControlFeatureName,
+		smartcharging.NotifyAllowedEnergyTransferFeatureName,
+		smartcharging.GetDERControlFeatureName,
+		smartcharging.SetDERControlFeatureName,
+		smartcharging.UpdateDynamicScheduleFeatureName,
+		smartcharging.UsePriorityChargingFeatureName,
+		tariffcost.ChangeTransactionTariffFeatureName,
+		tariffcost.ClearTariffsFeatureName,
+		tariffcost.GetTariffsFeatureName,
+		tariffcost.SetDefaultTariffFeatureName:
+		break
 	default:
 		return fmt.Errorf("unsupported action %v on CSMS, cannot send request", featureName)
 	}
@@ -1010,6 +1026,31 @@ func (cs *csms) handleIncomingRequest(chargingStation ChargingStationConnection,
 			response, err = cs.availabilityHandler.OnStatusNotification(chargingStation.ID(), request.(*availability.StatusNotificationRequest))
 		case transactions.TransactionEventFeatureName:
 			response, err = cs.transactionsHandler.OnTransactionEvent(chargingStation.ID(), request.(*transactions.TransactionEventRequest))
+		case diagnostics.ClosePeriodicEventStreamFeatureName:
+			response, err = cs.diagnosticsHandler.OnClosePeriodicEventStream(chargingStation.ID(), request.(*diagnostics.ClosePeriodicEventStreamRequest))
+		case diagnostics.NotifyPeriodicEventStreamFeatureName:
+			cs.diagnosticsHandler.OnNotifyPeriodicEventStream(chargingStation.ID(), request.(*diagnostics.NotifyPeriodicEventStreamRequest))
+			return
+		case diagnostics.NotifyPriorityChargingFeatureName:
+			response, err = cs.diagnosticsHandler.OnNotifyPriorityCharging(chargingStation.ID(), request.(*diagnostics.NotifyPriorityChargingRequest))
+		case diagnostics.NotifySettlementFeatureName:
+			response, err = cs.diagnosticsHandler.OnNotifySettlement(chargingStation.ID(), request.(*diagnostics.NotifySettlementRequest))
+		case diagnostics.OpenPeriodicEventStreamFeatureName:
+			response, err = cs.diagnosticsHandler.OnOpenPeriodicEventStream(chargingStation.ID(), request.(*diagnostics.OpenPeriodicEventStreamRequest))
+		case smartcharging.PullDynamicScheduleUpdateFeatureName:
+			response, err = cs.smartChargingHandler.OnPullDynamicScheduleUpdate(chargingStation.ID(), request.(*smartcharging.PullDynamicScheduleUpdateRequest))
+		case smartcharging.NotifyDERAlarmFeatureName:
+			response, err = cs.smartChargingHandler.OnNotifyDERAlarm(chargingStation.ID(), request.(*smartcharging.NotifyDERAlarmRequest))
+		case smartcharging.NotifyDERStartStopFeatureName:
+			response, err = cs.smartChargingHandler.OnNotifyDERStartStop(chargingStation.ID(), request.(*smartcharging.NotifyDERStartStopRequest))
+		case smartcharging.ReportDERControlFeatureName:
+			response, err = cs.smartChargingHandler.OnReportDERControl(chargingStation.ID(), request.(*smartcharging.ReportDERControlRequest))
+		case tariffcost.VatNumberValidationFeatureName:
+			response, err = cs.tariffCostHandler.OnVatNumberValidation(chargingStation.ID(), request.(*tariffcost.VatNumberValidationRequest))
+		case transactions.BatterySwapFeatureName:
+			response, err = cs.transactionsHandler.OnBatterySwap(chargingStation.ID(), request.(*transactions.BatterySwapRequest))
+		case iso15118.GetCertificateChainStatusFeatureName:
+			response, err = cs.iso15118Handler.OnGetCertificateChainStatus(chargingStation.ID(), request.(*iso15118.GetCertificateChainStatusRequest))
 		default:
 			cs.notSupportedError(chargingStation.ID(), requestId, action)
 			return

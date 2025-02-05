@@ -17,6 +17,9 @@ type VariableMonitoring struct {
 	Value       float64     `json:"value"`                                // Value for threshold or delta monitoring. For Periodic or PeriodicClockAligned this is the interval in seconds.
 	Type        MonitorType `json:"type" validate:"required,monitorType"` // The type of this monitor, e.g. a threshold, delta or periodic monitor.
 	Severity    int         `json:"severity" validate:"min=0,max=9"`      // The severity that will be assigned to an event that is triggered by this monitor. The severity range is 0-9, with 0 as the highest and 9 as the lowest severity level.
+
+	// Optional field for ocpp2.1
+	EventNotificationType *EventNotification `json:"eventNotificationType,omitempty" validate:"omitempty,eventNotification"`
 }
 
 // NewVariableMonitoring is a utility function for creating a VariableMonitoring struct.

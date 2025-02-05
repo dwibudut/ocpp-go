@@ -15,6 +15,10 @@ type NotifyEVChargingScheduleRequest struct {
 	TimeBase         *types.DateTime        `json:"timeBase" validate:"required"`
 	EvseID           int                    `json:"evseId" validate:"gt=0"`
 	ChargingSchedule types.ChargingSchedule `json:"chargingSchedule" validate:"required,dive"`
+
+	// Optional field for ocpp2.1
+	SelectedChargingScheduleId int  `json:"selectedChargingScheduleId,omitempty" validate:"omitempty,gte=0"`
+	PowerToleranceAcceptance   bool `json:"powerToleranceAcceptance,omitempty" validate:"omitempty"`
 }
 
 // This field definition of the NotifyEVChargingSchedule response payload, sent by the CSMS to the Charging Station in response to a NotifyEVChargingScheduleRequest.

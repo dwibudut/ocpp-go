@@ -34,6 +34,9 @@ func isValidCertificateSignedStatus(fl validator.FieldLevel) bool {
 type CertificateSignedRequest struct {
 	CertificateChain  string                      `json:"certificateChain" validate:"required,max=10000"`
 	TypeOfCertificate types.CertificateSigningUse `json:"certificateType,omitempty" validate:"omitempty,certificateSigningUse"`
+
+	// Optional field for ocpp2.1
+	RequestId int `json:"requestId,omitempty" validate:"omitempty"`
 }
 
 // The field definition of the CertificateSignedResponse payload sent by the Charging Station to the CSMS in response to a CertificateSignedRequest.

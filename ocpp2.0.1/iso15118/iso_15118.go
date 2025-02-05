@@ -13,6 +13,8 @@ type CSMSHandler interface {
 	OnGet15118EVCertificate(chargingStationID string, request *Get15118EVCertificateRequest) (response *Get15118EVCertificateResponse, err error)
 	// OnGetCertificateStatus is called on the CSMS whenever a GetCertificateStatusRequest is received from a charging station.
 	OnGetCertificateStatus(chargingStationID string, request *GetCertificateStatusRequest) (response *GetCertificateStatusResponse, err error)
+	// OnGetCertificateChainStatus is called on the CSMS whenever a GetCertificateChainStatusRequest is received from a charging station.
+	OnGetCertificateChainStatus(chargingStationID string, request *GetCertificateChainStatusRequest) (response *GetCertificateChainStatusResponse, err error)
 }
 
 // Needs to be implemented by Charging stations for handling messages part of the OCPP 2.0 ISO 15118 profile.
@@ -34,4 +36,5 @@ var Profile = ocpp.NewProfile(
 	GetCertificateStatusFeature{},
 	GetInstalledCertificateIdsFeature{},
 	InstallCertificateFeature{},
+	GetCertificateChainStatusFeature{},
 )

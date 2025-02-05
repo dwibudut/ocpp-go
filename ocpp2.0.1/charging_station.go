@@ -521,6 +521,20 @@ func (cs *chargingStation) SendRequestAsync(request ocpp.Request, callback func(
 		availability.StatusNotificationFeatureName,
 		transactions.TransactionEventFeatureName:
 		break
+	case diagnostics.NotifyPeriodicEventStreamFeatureName:
+		return cs.client.SendSendRequest(request)
+	case diagnostics.ClosePeriodicEventStreamFeatureName,
+		diagnostics.NotifyPriorityChargingFeatureName,
+		diagnostics.NotifySettlementFeatureName,
+		diagnostics.OpenPeriodicEventStreamFeatureName,
+		smartcharging.PullDynamicScheduleUpdateFeatureName,
+		smartcharging.NotifyDERAlarmFeatureName,
+		smartcharging.NotifyDERStartStopFeatureName,
+		smartcharging.ReportDERControlFeatureName,
+		tariffcost.VatNumberValidationFeatureName,
+		transactions.BatterySwapFeatureName,
+		iso15118.GetCertificateChainStatusFeatureName:
+		break
 	default:
 		return fmt.Errorf("unsupported action %v on charging station, cannot send request", featureName)
 	}
@@ -796,6 +810,36 @@ func (cs *chargingStation) handleIncomingRequest(request ocpp.Request, requestId
 		response, err = cs.firmwareHandler.OnUnpublishFirmware(request.(*firmware.UnpublishFirmwareRequest))
 	case firmware.UpdateFirmwareFeatureName:
 		response, err = cs.firmwareHandler.OnUpdateFirmware(request.(*firmware.UpdateFirmwareRequest))
+	case diagnostics.AdjustPeriodicEventStreamFeatureName:
+		response, err = cs.diagnosticsHandler.OnAdjustPeriodicEventStream(request.(*diagnostics.AdjustPeriodicEventStreamRequest))
+	case diagnostics.GetPeriodicEventStreamFeatureName:
+		response, err = cs.diagnosticsHandler.OnGetPeriodicEventStream(request.(*diagnostics.GetPeriodicEventStreamRequest))
+	case diagnostics.NotifyWebPaymentStartedFeatureName:
+		response, err = cs.diagnosticsHandler.OnNotifyWebPaymentStarted(request.(*diagnostics.NotifyWebPaymentStartedRequest))
+	case remotecontrol.RequestBatterySwapFeatureName:
+		response, err = cs.remoteControlHandler.OnRequestBatterySwap(request.(*remotecontrol.RequestBatterySwapRequest))
+	case smartcharging.AFRRSignalFeatureName:
+		response, err = cs.smartChargingHandler.OnAFRRSignal(request.(*smartcharging.AFRRSignalRequest))
+	case smartcharging.ClearDERControlFeatureName:
+		response, err = cs.smartChargingHandler.OnClearDERControl(request.(*smartcharging.ClearDERControlRequest))
+	case smartcharging.NotifyAllowedEnergyTransferFeatureName:
+		response, err = cs.smartChargingHandler.OnNotifyAllowedEnergyTransfer(request.(*smartcharging.NotifyAllowedEnergyTransferRequest))
+	case smartcharging.GetDERControlFeatureName:
+		response, err = cs.smartChargingHandler.OnGetDERControl(request.(*smartcharging.GetDERControlRequest))
+	case smartcharging.SetDERControlFeatureName:
+		response, err = cs.smartChargingHandler.OnSetDERControl(request.(*smartcharging.SetDERControlRequest))
+	case smartcharging.UpdateDynamicScheduleFeatureName:
+		response, err = cs.smartChargingHandler.OnUpdateDynamicSchedule(request.(*smartcharging.UpdateDynamicScheduleRequest))
+	case smartcharging.UsePriorityChargingFeatureName:
+		response, err = cs.smartChargingHandler.OnUsePriorityCharging(request.(*smartcharging.UsePriorityChargingRequest))
+	case tariffcost.ChangeTransactionTariffFeatureName:
+		response, err = cs.tariffCostHandler.OnChangeTransactionTariff(request.(*tariffcost.ChangeTransactionTariffRequest))
+	case tariffcost.ClearTariffsFeatureName:
+		response, err = cs.tariffCostHandler.OnClearTariffs(request.(*tariffcost.ClearTariffsRequest))
+	case tariffcost.GetTariffsFeatureName:
+		response, err = cs.tariffCostHandler.OnGetTariffs(request.(*tariffcost.GetTariffsRequest))
+	case tariffcost.SetDefaultTariffFeatureName:
+		response, err = cs.tariffCostHandler.OnSetDefaultTariff(request.(*tariffcost.SetDefaultTariffRequest))
 	default:
 		cs.notSupportedError(requestId, action)
 		return

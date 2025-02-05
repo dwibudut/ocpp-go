@@ -30,6 +30,10 @@ const (
 	MessageTriggerSignCombinedCertificate           MessageTrigger = "SignCombinedCertificate"
 	MessageTriggerPublishFirmwareStatusNotification MessageTrigger = "PublishFirmwareStatusNotification"
 
+	// Additional type for ocpp2.1
+	MessageTriggerSignV2G20Certificate MessageTrigger = "SignV2G20Certificate"
+	CustomTrigger                      MessageTrigger = "CustomTrigger"
+
 	TriggerMessageStatusAccepted       TriggerMessageStatus = "Accepted"
 	TriggerMessageStatusRejected       TriggerMessageStatus = "Rejected"
 	TriggerMessageStatusNotImplemented TriggerMessageStatus = "NotImplemented"
@@ -42,6 +46,8 @@ func isValidMessageTrigger(fl validator.FieldLevel) bool {
 		MessageTriggerHeartbeat, MessageTriggerMeterValues, MessageTriggerSignChargingStationCertificate,
 		MessageTriggerSignV2GCertificate, MessageTriggerStatusNotification, MessageTriggerTransactionEvent,
 		MessageTriggerSignCombinedCertificate, MessageTriggerPublishFirmwareStatusNotification:
+		return true
+	case MessageTriggerSignV2G20Certificate, CustomTrigger:
 		return true
 	default:
 		return false
@@ -62,6 +68,9 @@ func isValidTriggerMessageStatus(fl validator.FieldLevel) bool {
 type TriggerMessageRequest struct {
 	RequestedMessage MessageTrigger `json:"requestedMessage" validate:"required,messageTrigger201"`
 	Evse             *types.EVSE    `json:"evse,omitempty" validate:"omitempty"`
+
+	// Optional field for ocpp2.1
+	CustomTrigger string `json:"customTrigger,omitempty" validate:"omitempty,max=50"`
 }
 
 // This field definition of the TriggerMessage response payload, sent by the Charging Station to the CSMS in response to a TriggerMessageRequest.

@@ -17,6 +17,8 @@ type ChargingStationHandler interface {
 	OnTriggerMessage(request *TriggerMessageRequest) (response *TriggerMessageResponse, err error)
 	// OnUnlockConnector is called on a charging station whenever a UnlockConnectorRequest is received from the CSMS.
 	OnUnlockConnector(request *UnlockConnectorRequest) (response *UnlockConnectorResponse, err error)
+	// OnRequestBatterySwap is called on a charging station whenever a RequestBatterySwapRequest is received from the CSMS.
+	OnRequestBatterySwap(request *RequestBatterySwapRequest) (response *RequestBatterySwapResponse, err error)
 }
 
 const ProfileName = "remoteControl"
@@ -27,4 +29,5 @@ var Profile = ocpp.NewProfile(
 	RequestStopTransactionFeature{},
 	TriggerMessageFeature{},
 	UnlockConnectorFeature{},
+	RequestBatterySwapFeature{},
 )

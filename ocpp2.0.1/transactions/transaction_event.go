@@ -149,6 +149,11 @@ type TransactionEventRequest struct {
 	IDToken            *types.IdToken     `json:"idToken,omitempty" validate:"omitempty,dive"`
 	Evse               *types.EVSE        `json:"evse,omitempty" validate:"omitempty"`            // Identifies which evse (and connector) of the Charging Station is used.
 	MeterValue         []types.MeterValue `json:"meterValue,omitempty" validate:"omitempty,dive"` // Contains the relevant meter values.
+
+	// Optional field for ocpp2.1
+	CostDetails           *types.CostDetailsType              `json:"costDetails,omitempty" validate:"omitempty"`
+	PreconditioningStatus types.PreconditioningStatusEnumType `json:"preconditioningStatus,omitempty" validate:"omitempty,preconditioningStatusType"`
+	EvseSleep             bool                                `json:"evseSleep,omitempty" validate:"omitempty"`
 }
 
 // This field definition of the TransactionEventResponse payload, sent by the CSMS to the Charging Station in response to a TransactionEventRequest.
@@ -158,6 +163,10 @@ type TransactionEventResponse struct {
 	ChargingPriority       *int                  `json:"chargingPriority,omitempty" validate:"omitempty,min=-9,max=9"` // Priority from a business point of view. Default priority is 0, The range is from -9 to 9.
 	IDTokenInfo            *types.IdTokenInfo    `json:"idTokenInfo,omitempty" validate:"omitempty"`                   // Is required when the transactionEventRequest contained an idToken.
 	UpdatedPersonalMessage *types.MessageContent `json:"updatedPersonalMessage,omitempty" validate:"omitempty"`        // This can contain updated personal message that can be shown to the EV Driver. This can be used to provide updated tariff information.
+
+	// Optional field for ocpp2.1
+	TransactionLimit            *types.TransactionLimitType `json:"transactionLimit,omitempty" validate:"omitempty"`
+	UpdatedPersonalMessageExtra []types.MessageContent      `json:"updatedPersonalMessageExtra,omitempty" validate:"omitempty,min=1,max=4,dive"`
 }
 
 // Gives the CSMS information that will later be used to bill a transaction.

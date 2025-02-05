@@ -157,6 +157,10 @@ type NetworkConnectionProfile struct {
 	OCPPInterface   OCPPInterface `json:"ocppInterface" validate:"required,ocppInterface"` // Applicable Network Interface.
 	VPN             *VPN          `json:"vpn,omitempty" validate:"omitempty"`              // Settings to be used to set up the VPN connection.
 	APN             *APN          `json:"apn,omitempty" validate:"omitempty"`              // Collection of configuration data needed to make a data-connection over a cellular network.
+
+	// Optional field for ocpp2.1
+	Identity          string `json:"identity,omitempty" validate:"omitempty,max=48"`
+	BasicAuthPassword string `json:"basicAuthPassword,omitempty" validate:"omitempty,max=64"`
 }
 
 // The field definition of the SetNetworkProfile request payload sent by the CSMS to the Charging Station.

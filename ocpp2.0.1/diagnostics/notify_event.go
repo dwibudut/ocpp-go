@@ -65,6 +65,9 @@ type EventData struct {
 	EventNotificationType EventNotification `json:"eventNotificationType" validate:"required,eventNotification"`
 	Component             types.Component   `json:"component" validate:"required"`
 	Variable              types.Variable    `json:"variable" validate:"required"`
+
+	// Optional field for ocpp2.1
+	Severity *int `json:"severity,omitempty" validate:"omitempty,gte=0"`
 }
 
 // The field definition of the NotifyEvent request payload sent by a Charging Station to the CSMS.

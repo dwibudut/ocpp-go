@@ -38,6 +38,9 @@ func isValidUploadLogStatus(fl validator.FieldLevel) bool {
 type LogStatusNotificationRequest struct {
 	Status    UploadLogStatus `json:"status" validate:"required,uploadLogStatus"`
 	RequestID int             `json:"requestId" validate:"gte=0"`
+
+	// Optional field for ocpp2.1
+	StatusInfo *types.StatusInfo `json:"statusInfo,omitempty" validate:"omitempty"`
 }
 
 // This field definition of the LogStatusNotification response payload, sent by the CSMS to the Charging Station in response to a LogStatusNotificationRequest.
