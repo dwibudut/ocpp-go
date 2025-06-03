@@ -18,7 +18,7 @@ type GetCertificateStatusRequest struct {
 // This field definition of the GetCertificateStatus response payload, sent by the CSMS to the Charging Station in response to a GetCertificateStatusRequest.
 // In case the request was invalid, or couldn't be processed, an error will be sent instead.
 type GetCertificateStatusResponse struct {
-	Status     types.Certificate15118EVStatus `json:"status" validate:"required,genericStatus"`
+	Status     types.Certificate15118EVStatus `json:"status" validate:"required,15118EVCertificate"`
 	OcspResult string                         `json:"ocspResult,omitempty" validate:"omitempty,max=5500"`
 	StatusInfo *types.StatusInfo              `json:"statusInfo,omitempty" validate:"omitempty"`
 }
