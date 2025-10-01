@@ -18,12 +18,23 @@ const (
 	EnergyTransferModeAC1Phase EnergyTransferMode = "AC_single_phase" // AC single phase charging according to IEC 62196.
 	EnergyTransferModeAC2Phase EnergyTransferMode = "AC_two_phase"    // AC two phase charging according to IEC 62196.
 	EnergyTransferModeAC3Phase EnergyTransferMode = "AC_three_phase"  // AC three phase charging according to IEC 62196.
+
+	// Additional type for ocpp2.1
+	EnergyTransferModeACBPT     EnergyTransferMode = "AC_BPT"
+	EnergyTransferModeACBPTDER  EnergyTransferMode = "AC_BPT_DER"
+	EnergyTransferModeACDER     EnergyTransferMode = "AC_DER"
+	EnergyTransferModeDCBPT     EnergyTransferMode = "DC_BPT"
+	EnergyTransferModeDCACDP    EnergyTransferMode = "DC_ACDP"
+	EnergyTransferModeDCACDPBPT EnergyTransferMode = "DC_ACDP_BPT"
+	EnergyTransferModeWPT       EnergyTransferMode = "WPT"
 )
 
 func isValidEnergyTransferMode(fl validator.FieldLevel) bool {
 	status := EnergyTransferMode(fl.Field().String())
 	switch status {
 	case EnergyTransferModeAC1Phase, EnergyTransferModeAC2Phase, EnergyTransferModeAC3Phase, EnergyTransferModeDC:
+		return true
+	case EnergyTransferModeACBPT, EnergyTransferModeACBPTDER, EnergyTransferModeACDER, EnergyTransferModeDCBPT, EnergyTransferModeDCACDP, EnergyTransferModeDCACDPBPT, EnergyTransferModeWPT:
 		return true
 	default:
 		return false
