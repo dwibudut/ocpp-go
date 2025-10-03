@@ -39,6 +39,9 @@ const (
 	OCPPVersion16 OCPPVersion = "OCPP16" // 1.6
 	OCPPVersion20 OCPPVersion = "OCPP20" // 2.0
 
+	// Additional type for ocpp2.1
+	OCPPVersion21 OCPPVersion = "OCPP21" // 2.1
+
 	OCPPTransportJSON OCPPTransport = "JSON" // Use JSON over WebSockets for transport of OCPP PDU’s
 	OCPPTransportSOAP OCPPTransport = "SOAP" // Use SOAP for transport of OCPP PDU’s
 
@@ -50,6 +53,9 @@ const (
 	OCPPInterfaceWireless1 OCPPInterface = "Wireless1"
 	OCPPInterfaceWireless2 OCPPInterface = "Wireless2"
 	OCPPInterfaceWireless3 OCPPInterface = "Wireless3"
+
+	// Additional type for ocpp2.1
+	OCPPInterfaceAny OCPPInterface = "Any"
 
 	VPNTypeIKEv2 VPNType = "IKEv2"
 	VPNTypeIPSec VPNType = "IPSec"
@@ -71,6 +77,8 @@ func isValidOCPPVersion(fl validator.FieldLevel) bool {
 	switch v {
 	case OCPPVersion12, OCPPVersion15, OCPPVersion16, OCPPVersion20:
 		return true
+	case OCPPVersion21:
+		return true
 	default:
 		return false
 	}
@@ -91,6 +99,8 @@ func isValidOCPPInterface(fl validator.FieldLevel) bool {
 	switch i {
 	case OCPPInterfaceWired0, OCPPInterfaceWired1, OCPPInterfaceWired2, OCPPInterfaceWired3,
 		OCPPInterfaceWireless0, OCPPInterfaceWireless1, OCPPInterfaceWireless2, OCPPInterfaceWireless3:
+		return true
+	case OCPPInterfaceAny:
 		return true
 	default:
 		return false
@@ -132,7 +142,7 @@ type VPN struct {
 	Server   string  `json:"server" validate:"required,max=512"`          // VPN Server Address.
 	User     string  `json:"user" validate:"required,max=20"`             // VPN User.
 	Group    string  `json:"group,omitempty" validate:"omitempty,max=20"` // VPN group.
-	Password string  `json:"password" validate:"required,max=20"`         // VPN Password.
+	Password string  `json:"password" validate:"required,max=64"`         // VPN Password.
 	Key      string  `json:"key" validate:"required,max=255"`             // VPN shared secret.
 	Type     VPNType `json:"type" validate:"required,vpnType"`            // Type of VPN.
 }
@@ -140,7 +150,7 @@ type VPN struct {
 type APN struct {
 	APN                     string            `json:"apn" validate:"required,max=512"`                         // The Access Point Name as an URL.
 	APNUsername             string            `json:"apnUserName,omitempty" validate:"omitempty,max=20"`       // APN username.
-	APNPassword             string            `json:"apnPassword,omitempty" validate:"omitempty,max=20"`       // APN password.
+	APNPassword             string            `json:"apnPassword,omitempty" validate:"omitempty,max=64"`       // APN password.
 	SimPin                  *int              `json:"simPin,omitempty" validate:"omitempty,gte=0"`             // SIM card pin code.
 	PreferredNetwork        string            `json:"preferredNetwork,omitempty" validate:"omitempty,max=6"`   // Preferred network, written as MCC and MNC concatenated.
 	UseOnlyPreferredNetwork bool              `json:"useOnlyPreferredNetwork,omitempty"`                       // Use only the preferred Network, do not dial in when not available.
