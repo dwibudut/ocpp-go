@@ -98,6 +98,7 @@ type ChargingNeeds struct {
 	V2XChargingParameters   *V2XChargingParametersType         `json:"v2xChargingParameters,omitempty" validate:"omitempty"`
 	AvailableEnergyTransfer []types.EnergyTransferModeEnumType `json:"availableEnergyTransfer,omitempty" validate:"omitempty,min=1,dive,energyTransferModeType"`
 	ControlMode             types.ControlModeEnumType          `json:"controlMode,omitempty" validate:"omitempty,controlModeType"`
+	MobilityNeedsMode       types.MobilityNeedsModeEnumType    `json:"mobilityNeedsMode,omitempty" validate:"omitempty,mobilityNeedsModeType"`
 }
 
 // The field definition of the NotifyEVChargingNeeds request payload sent by the Charging Station to the CSMS.

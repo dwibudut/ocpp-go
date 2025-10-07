@@ -555,6 +555,24 @@ func isValidControlModeType(fl validator.FieldLevel) bool {
 	}
 }
 
+// MobilityNeedsModeEnumType
+type MobilityNeedsModeEnumType string
+
+const (
+	MobilityNeedsModeEVCC     MobilityNeedsModeEnumType = "EVCC"
+	MobilityNeedsModeEVCCSECC MobilityNeedsModeEnumType = "EVCC_SECC"
+)
+
+func isValidMobilityNeedsModeType(fl validator.FieldLevel) bool {
+	status := MobilityNeedsModeEnumType(fl.Field().String())
+	switch status {
+	case MobilityNeedsModeEVCC, MobilityNeedsModeEVCCSECC:
+		return true
+	default:
+		return false
+	}
+}
+
 // GridEventFaultEnumType
 type GridEventFaultEnumType string
 
@@ -659,6 +677,7 @@ func init() {
 	_ = Validate.RegisterValidation("derControlType", isValidDERControlType)
 	_ = Validate.RegisterValidation("islandingDetectionType", isValidIslandingDetectionType)
 	_ = Validate.RegisterValidation("controlModeType", isValidControlModeType)
+	_ = Validate.RegisterValidation("mobilityNeedsModeType", isValidMobilityNeedsModeType)
 	_ = Validate.RegisterValidation("gridEventFaultType", isValidGridEventFaultType)
 	_ = Validate.RegisterValidation("paymentStatusType", isValidPaymentStatusType)
 	_ = Validate.RegisterValidation("certificateStatusSource", isValidCertificateStatusSource)
