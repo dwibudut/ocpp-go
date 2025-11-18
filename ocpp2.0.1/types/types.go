@@ -206,12 +206,17 @@ type CertificateSigningUse string
 const (
 	ChargingStationCert CertificateSigningUse = "ChargingStationCertificate"
 	V2GCertificate      CertificateSigningUse = "V2GCertificate"
+
+	// Additional type for ocpp2.1
+	V2G20Certificate CertificateSigningUse = "V2G20Certificate"
 )
 
 func isValidCertificateSigningUse(fl validator.FieldLevel) bool {
 	status := CertificateSigningUse(fl.Field().String())
 	switch status {
 	case ChargingStationCert, V2GCertificate:
+		return true
+	case V2G20Certificate:
 		return true
 	default:
 		return false
