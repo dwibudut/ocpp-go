@@ -30,8 +30,11 @@ func isValidGetCompositeScheduleStatus(fl validator.FieldLevel) bool {
 }
 
 type CompositeSchedule struct {
-	StartDateTime    *types.DateTime         `json:"startDateTime,omitempty" validate:"omitempty"`
-	ChargingSchedule *types.ChargingSchedule `json:"chargingSchedule,omitempty" validate:"omitempty"`
+	EvseID                 int                            `json:"evseId" validate:"gte=0"`
+	Duration               int                            `json:"duration" validate:"gte=0"`
+	ScheduleStart          *types.DateTime                `json:"scheduleStart" validate:"required"`
+	ChargingRateUnit       types.ChargingRateUnitType     `json:"chargingRateUnit" validate:"required"`
+	ChargingSchedulePeriod []types.ChargingSchedulePeriod `json:"chargingSchedulePeriod" validate:"required,min=1,dive"`
 }
 
 // The field definition of the GetCompositeSchedule request payload sent by the CSMS to the Charging System.
@@ -44,9 +47,9 @@ type GetCompositeScheduleRequest struct {
 // This field definition of the GetCompositeSchedule response payload, sent by the Charging System to the CSMS in response to a GetCompositeScheduleRequest.
 // In case the request was invalid, or couldn't be processed, an error will be sent instead.
 type GetCompositeScheduleResponse struct {
-	Status   GetCompositeScheduleStatus `json:"status" validate:"required,getCompositeScheduleStatus"`
-	EvseID   int                        `json:"evseId" validate:"gte=0"`
-	Schedule *CompositeSchedule         `json:"schedule,omitempty" validate:"omitempty"`
+	Status     GetCompositeScheduleStatus `json:"status" validate:"required,getCompositeScheduleStatus"`
+	Schedule   *CompositeSchedule         `json:"schedule,omitempty" validate:"omitempty"`
+	StatusInfo *types.StatusInfo          `json:"statusInfo,omitempty" validate:"omitempty"` // Detailed status information.
 }
 
 // The CSMS MAY request the Charging System to report the Composite Charging Schedule by sending a GetCompositeScheduleRequest.
@@ -82,8 +85,8 @@ func NewGetCompositeScheduleRequest(duration int, evseId int) *GetCompositeSched
 }
 
 // Creates a new GetCompositeScheduleResponse, containing all required fields. Optional fields may be set afterwards.
-func NewGetCompositeScheduleResponse(status GetCompositeScheduleStatus, evseId int) *GetCompositeScheduleResponse {
-	return &GetCompositeScheduleResponse{Status: status, EvseID: evseId}
+func NewGetCompositeScheduleResponse(status GetCompositeScheduleStatus) *GetCompositeScheduleResponse {
+	return &GetCompositeScheduleResponse{Status: status}
 }
 
 func init() {
