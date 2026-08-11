@@ -23,12 +23,17 @@ const (
 	LogStatusAccepted         LogStatus = "Accepted"         // Accepted this log upload. This does not mean the log file is uploaded is successfully, the Charging Station will now start the log file upload.
 	LogStatusRejected         LogStatus = "Rejected"         // Log update request rejected.
 	LogStatusAcceptedCanceled LogStatus = "AcceptedCanceled" // Accepted this log upload, but in doing this has canceled an ongoing log file upload.
+
+	// Additional type for ocpp2.1
+	LogTypeDataCollectorLog LogType = "DataCollectorLog"
 )
 
 func isValidLogType(fl validator.FieldLevel) bool {
 	status := LogType(fl.Field().String())
 	switch status {
 	case LogTypeDiagnostics, LogTypeSecurity:
+		return true
+	case LogTypeDataCollectorLog:
 		return true
 	default:
 		return false
